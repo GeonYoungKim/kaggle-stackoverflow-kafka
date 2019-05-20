@@ -1,4 +1,4 @@
-package com.skuniv.cs.geonyeong.kagglekafka;
+package com.skuniv.cs.geonyeong.kaggle;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
