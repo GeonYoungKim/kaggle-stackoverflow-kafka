@@ -1,8 +1,14 @@
 package com.skuniv.cs.geonyeong.kaggle.service;
 
+import static com.skuniv.cs.geonyeong.kaggle.constant.KafkaConsumerConstant.CONSUME_WAIT_TIME;
+import static com.skuniv.cs.geonyeong.kaggle.constant.KafkaConsumerConstant.POLL_SECOND;
+
+import com.skuniv.cs.geonyeong.kaggle.dao.PostDao;
 import com.skuniv.cs.geonyeong.kaggle.enums.KafkaTopicType;
 import com.skuniv.cs.geonyeong.kaggle.utils.KafkaConsumerFactoryUtil;
 import com.skuniv.cs.geonyeong.kaggle.vo.avro.AvroAnswer;
+import java.time.Duration;
+import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -11,22 +17,18 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
-import java.util.Arrays;
-
-import static com.skuniv.cs.geonyeong.kaggle.constant.KafkaConsumerConstant.CONSUME_WAIT_TIME;
-import static com.skuniv.cs.geonyeong.kaggle.constant.KafkaConsumerConstant.POLL_SECOND;
-
 @Slf4j
 @RequiredArgsConstructor
 @Component
 public class AnswerDeleteProcessor implements InitializingBean, DisposableBean, Processor {
-    private final EsClient esClient;
+
+    private final PostDao postDao;
     private KafkaConsumer<String, AvroAnswer> consumer;
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        consumer = KafkaConsumerFactoryUtil.createKafkaConsumer(Arrays.asList(new KafkaTopicType[]{KafkaTopicType.ANSWER_DELETE}));
+        consumer = KafkaConsumerFactoryUtil
+            .createKafkaConsumer(Arrays.asList(new KafkaTopicType[]{KafkaTopicType.ANSWER_DELETE}));
 
     }
 
@@ -38,20 +40,21 @@ public class AnswerDeleteProcessor implements InitializingBean, DisposableBean, 
     @Override
     public void start() {
         log.info("AnswerDeleteProcessor");
-//        while (true) {
-//            ConsumerRecords<String, AvroAnswer> records = consumer.poll(Duration.ofSeconds(POLL_SECOND));
-//            if (records.isEmpty()) {
-//                try {
-//                    Thread.sleep(CONSUME_WAIT_TIME);
-//                } catch (InterruptedException e) {
-//                    log.error("InterruptedException => {}", e);
-//                }
-//            }
-//
-//            records.forEach(record -> {
-//                // TODO : es 답변 삭제 처리.
-//            });
-//        }
+
+        while (true) {
+            ConsumerRecords<String, AvroAnswer> records = consumer
+                .poll(Duration.ofSeconds(POLL_SECOND));
+            if (records.isEmpty()) {
+                try {
+                    Thread.sleep(CONSUME_WAIT_TIME);
+                } catch (InterruptedException e) {
+                    log.error("InterruptedException => {}", e);
+                }
+                continue;
+            }
+            // delete 실행
+            postDao.deleteAnswer(records);
+        }
     }
 
     @Override

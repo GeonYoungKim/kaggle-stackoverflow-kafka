@@ -1,5 +1,6 @@
 package com.skuniv.cs.geonyeong.kaggle.service;
 
+import com.skuniv.cs.geonyeong.kaggle.dao.PostDao;
 import com.skuniv.cs.geonyeong.kaggle.enums.KafkaTopicType;
 import com.skuniv.cs.geonyeong.kaggle.utils.KafkaConsumerFactoryUtil;
 import com.skuniv.cs.geonyeong.kaggle.vo.avro.AvroQuestion;
@@ -22,7 +23,7 @@ import static com.skuniv.cs.geonyeong.kaggle.constant.KafkaConsumerConstant.POLL
 @Component
 public class QuestionDeleteProcessor implements InitializingBean, DisposableBean, Processor {
 
-    private final EsClient esClient;
+    private final PostDao postDao;
     private KafkaConsumer<String, AvroQuestion> consumer;
 
     @Override
@@ -46,10 +47,7 @@ public class QuestionDeleteProcessor implements InitializingBean, DisposableBean
                     log.error("InterruptedException => {}", e);
                 }
             }
-
-            records.forEach(record -> {
-                // TODO : es 질문 삭제 처리.
-            });
+            postDao.deleteQuestion(records);
         }
     }
 

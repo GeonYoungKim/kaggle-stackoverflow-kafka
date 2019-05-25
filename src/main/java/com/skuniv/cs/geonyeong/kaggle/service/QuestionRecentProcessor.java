@@ -1,8 +1,14 @@
 package com.skuniv.cs.geonyeong.kaggle.service;
 
+import static com.skuniv.cs.geonyeong.kaggle.constant.KafkaConsumerConstant.CONSUME_WAIT_TIME;
+import static com.skuniv.cs.geonyeong.kaggle.constant.KafkaConsumerConstant.POLL_SECOND;
+
+import com.skuniv.cs.geonyeong.kaggle.dao.PostDao;
 import com.skuniv.cs.geonyeong.kaggle.enums.KafkaTopicType;
 import com.skuniv.cs.geonyeong.kaggle.utils.KafkaConsumerFactoryUtil;
 import com.skuniv.cs.geonyeong.kaggle.vo.avro.AvroQuestion;
+import java.time.Duration;
+import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -11,22 +17,18 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
-import java.util.Arrays;
-
-import static com.skuniv.cs.geonyeong.kaggle.constant.KafkaConsumerConstant.CONSUME_WAIT_TIME;
-import static com.skuniv.cs.geonyeong.kaggle.constant.KafkaConsumerConstant.POLL_SECOND;
-
 @Slf4j
 @RequiredArgsConstructor
 @Component
 public class QuestionRecentProcessor implements InitializingBean, DisposableBean, Processor {
-    private final EsClient esClient;
+
+    private final PostDao postDao;
     private KafkaConsumer<String, AvroQuestion> consumer;
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        consumer = KafkaConsumerFactoryUtil.createKafkaConsumer(Arrays.asList(new KafkaTopicType[]{KafkaTopicType.QUESTION_RECENT}));
+        consumer = KafkaConsumerFactoryUtil.createKafkaConsumer(
+            Arrays.asList(new KafkaTopicType[]{KafkaTopicType.QUESTION_RECENT}));
     }
 
     @Override
@@ -37,7 +39,8 @@ public class QuestionRecentProcessor implements InitializingBean, DisposableBean
     @Override
     public void start() {
         while (true) {
-            ConsumerRecords<String, AvroQuestion> records = consumer.poll(Duration.ofSeconds(POLL_SECOND));
+            ConsumerRecords<String, AvroQuestion> records = consumer
+                .poll(Duration.ofSeconds(POLL_SECOND));
             if (records.isEmpty()) {
                 try {
                     Thread.sleep(CONSUME_WAIT_TIME);
@@ -45,10 +48,7 @@ public class QuestionRecentProcessor implements InitializingBean, DisposableBean
                     log.error("InterruptedException => {}", e);
                 }
             }
-
-            records.forEach(record -> {
-                // TODO : es 질문 추가 변경 처리.
-            });
+            postDao.upsertQuestion(records);
         }
     }
 
