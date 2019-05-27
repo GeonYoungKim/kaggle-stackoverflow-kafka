@@ -3,20 +3,21 @@ package com.skuniv.cs.geonyeong.kaggle.utils;
 import com.skuniv.cs.geonyeong.kaggle.enums.KafkaTopicType;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig;
+import java.util.List;
+import java.util.Properties;
+import java.util.stream.Collectors;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
-import java.util.List;
-import java.util.Properties;
-import java.util.stream.Collectors;
-
 public class KafkaConsumerFactoryUtil {
 
     private static Properties consumerProperties() throws ConfigurationException {
-        String bootstrapServers = YmlUtil.getYmlProps().getProperty("com.skuniv.cs.geonyeong.kaggle.kafka.bootstrapServers");
-        String schemaRegistryUrl = YmlUtil.getYmlProps().getProperty("com.skuniv.cs.geonyeong.kaggle.schema.registry.url");
+        String bootstrapServers = YmlUtil.getYmlProps()
+            .getProperty("com.skuniv.cs.geonyeong.kaggle.kafka.bootstrapServers");
+        String schemaRegistryUrl = YmlUtil.getYmlProps()
+            .getProperty("com.skuniv.cs.geonyeong.kaggle.schema.registry.url");
 
         Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -36,7 +37,8 @@ public class KafkaConsumerFactoryUtil {
         } catch (ConfigurationException e) {
             throw new RuntimeException("ConfigurationException => {}", e);
         }
-        List<String> topicList = topics.stream().map(KafkaTopicType::name).collect(Collectors.toList());
+        List<String> topicList = topics.stream().map(KafkaTopicType::name)
+            .collect(Collectors.toList());
         kafkaConsumer.subscribe(topicList);
         return kafkaConsumer;
     }

@@ -21,12 +21,14 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 @Component
 public class AnswerRecentProcessor implements InitializingBean, DisposableBean, Processor {
+
     private final PostDao postDao;
     private KafkaConsumer<String, AvroAnswer> consumer;
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        consumer = KafkaConsumerFactoryUtil.createKafkaConsumer(Arrays.asList(new KafkaTopicType[]{KafkaTopicType.ANSWER_RECENT}));
+        consumer = KafkaConsumerFactoryUtil
+            .createKafkaConsumer(Arrays.asList(new KafkaTopicType[]{KafkaTopicType.ANSWER_RECENT}));
     }
 
     @Override
@@ -37,7 +39,8 @@ public class AnswerRecentProcessor implements InitializingBean, DisposableBean, 
     @Override
     public void start() {
         while (true) {
-            ConsumerRecords<String, AvroAnswer> records = consumer.poll(Duration.ofSeconds(POLL_SECOND));
+            ConsumerRecords<String, AvroAnswer> records = consumer
+                .poll(Duration.ofSeconds(POLL_SECOND));
             if (records.isEmpty()) {
                 try {
                     Thread.sleep(CONSUME_WAIT_TIME);

@@ -6,7 +6,6 @@ import com.skuniv.cs.geonyeong.kaggle.vo.avro.AvroAnswer;
 import com.skuniv.cs.geonyeong.kaggle.vo.avro.AvroQuestion;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.delete.DeleteRequest;
@@ -74,7 +73,6 @@ public class PostDao {
         }
     }
 
-
     public void deleteQuestion(ConsumerRecords<String, AvroQuestion> records) {
         BulkRequest bulkRequest = new BulkRequest();
         records.forEach(item -> {
@@ -88,7 +86,6 @@ public class PostDao {
             log.error("RuntimeException => {}", e);
         }
     }
-
 
     public void upsertQuestion(ConsumerRecords<String, AvroQuestion> records) {
         BulkRequest bulkRequest = new BulkRequest();
